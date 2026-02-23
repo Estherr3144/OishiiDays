@@ -1,20 +1,18 @@
-import React from "react";
-import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import HomeScreen from "../screens/HomeScreen";
-import AddMealScreen from "../screens/AddMealScreen";
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 
-export type RootStackParamList = {
-  Home: undefined;
-  AddMeal: undefined;
-};
+import Calendar from "./Calendar";
+import Map from "./Map";
+import Settings from "./Settings";
 
-const Stack = createNativeStackNavigator<RootStackParamList>();
+const Tab = createBottomTabNavigator();
 
-export default function StackNavigator() {
+export default function TabNavigator() 
+{
   return (
-    <Stack.Navigator>
-      <Stack.Screen name="Home" component={HomeScreen} options={{ title: "OishiiDays" }} />
-      <Stack.Screen name="AddMeal" component={AddMealScreen} options={{ title: "Add Meal" }} />
-    </Stack.Navigator>
+    <Tab.Navigator>
+      <Tab.Screen name="Calendar" component={Calendar} />
+      <Tab.Screen name="Map" component={Map} />
+      <Tab.Screen name="Settings" component={Settings} />
+    </Tab.Navigator>
   );
 }
