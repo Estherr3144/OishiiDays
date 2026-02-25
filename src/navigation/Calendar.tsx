@@ -6,13 +6,25 @@ import AddFoodScreen from "../screens/calendar/AddFoodScreen";
 
 const Stack = createNativeStackNavigator();
 
-export default function Calendar() 
+export default function CalendarStack() 
 {
   return (
     <Stack.Navigator>
-      <Stack.Screen name="CalendarScreen" component={CalendarScreen} />
-      <Stack.Screen name="DayDetail" component={DayDetailScreen} />
-      <Stack.Screen name="AddFood" component={AddFoodScreen} />
+      <Stack.Screen
+        name="CalendarScreen"
+        component={CalendarScreen}
+        options={{ title: "Food Journal" }}
+      />
+
+      <Stack.Screen
+        name="DayDetail"
+        component={DayDetailScreen}
+      />
+
+      <Stack.Screen
+        name="AddFood"
+        component={AddFoodScreen}
+      />
     </Stack.Navigator>
   );
 }
