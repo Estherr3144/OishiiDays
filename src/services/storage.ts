@@ -18,15 +18,15 @@ export const getFoodRecords = async (): Promise<FoodRecord[]> => {
 };
 
 
-const saveFoodRecords = async (records: FoodRecord[]) => {
-  try {
-    await AsyncStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify(records)
-    );
-  } catch (error) {
-    console.error("Error saving records", error);
-  }
+export const saveFoodRecord = async (record: FoodRecord) => {
+  const existing = await getFoodRecords();
+
+  const updated = [...existing, record];
+
+  await AsyncStorage.setItem(
+    "FOOD_RECORDS",
+    JSON.stringify(updated)
+  );
 };
 
 
