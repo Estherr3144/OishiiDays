@@ -8,7 +8,8 @@ const Stack = createNativeStackNavigator();
 
 export default function CalendarStack() 
 {
-  return (
+  return
+  (
     <Stack.Navigator>
       <Stack.Screen
         name="CalendarScreen"

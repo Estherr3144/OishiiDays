@@ -4,11 +4,15 @@ import { FoodRecord } from "../types/FoodRecord";
 const STORAGE_KEY = "FOOD_RECORDS";
 
 export const getFoodRecords = async (): Promise<FoodRecord[]> => {
-  try {
+  try 
+  {
     const data = await AsyncStorage.getItem(STORAGE_KEY);
     if (!data) return [];
     return JSON.parse(data);
-  } catch (error) {
+  } 
+  
+  catch (error) 
+  {
     console.error("Error getting records", error);
     return [];
   }
