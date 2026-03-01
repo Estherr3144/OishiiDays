@@ -3,13 +3,10 @@ import { FoodRecord } from "../types/FoodRecord";
 
 const STORAGE_KEY = "FOOD_RECORDS";
 
-
 export const getFoodRecords = async (): Promise<FoodRecord[]> => {
   try {
     const data = await AsyncStorage.getItem(STORAGE_KEY);
-
     if (!data) return [];
-
     return JSON.parse(data);
   } catch (error) {
     console.error("Error getting records", error);
@@ -17,47 +14,43 @@ export const getFoodRecords = async (): Promise<FoodRecord[]> => {
   }
 };
 
-
 export const saveFoodRecord = async (record: FoodRecord) => {
   const existing = await getFoodRecords();
-
   const updated = [...existing, record];
-
-  await AsyncStorage.setItem(
-    "FOOD_RECORDS",
-    JSON.stringify(updated)
-  );
+  await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
 };
 
-
-export const addFoodRecord = async (
-  record: FoodRecord
-) => {
-  const records = await getFoodRecords();
-
-  records.push(record);
-
-  await saveFoodRecords(records);
+export const saveFoodRecords = async (records: FoodRecord[]) => {
+  await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(records));
 };
 
+export const addFoodRecord = async (record: FoodRecord) => {
+  await saveFoodRecord(record);
+};
 
-export const updateFoodRecord = async (
-  updated: FoodRecord
-) => {
+export const updateFoodRecord = async (updated: FoodRecord) => {
   const records = await getFoodRecords();
-
-  const newRecords = records.map(r =>
-    r.id === updated.id ? updated : r
-  );
-
+  const newRecords = records.map(r => (r.id === updated.id ? updated : r));
   await saveFoodRecords(newRecords);
 };
-
 
 export const deleteFoodRecord = async (id: string) => {
   const records = await getFoodRecords();
-
   const newRecords = records.filter(r => r.id !== id);
-
   await saveFoodRecords(newRecords);
+};
+
+export const getEarliestRecordPerDay = async (): Promise<FoodRecord[]> => {
+  const allRecords = await getFoodRecords();
+
+  const map: { [date: string]: FoodRecord } = {};
+
+  allRecords.forEach(record => {
+    if (!map[record.date] || map[record.date].createdAt > record.createdAt) 
+    {
+      map[record.date] = record; 
+    }
+  });
+
+  return Object.values(map);
 };
