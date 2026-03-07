@@ -1,143 +1,209 @@
-
-import React, { useState } from "react";
-import 
-{
-  View,
-  Text,
-  TextInput,
-  Button,
-  Image,
-  StyleSheet,
-  Alert,
-} from "react-native";
-
+import React, {useState} from "react";
+import {View, Text, TextInput, Button, Image, StyleSheet, Alert, ScrollView, KeyboardAvoidingView, Platform,} from "react-native";
 import * as ImagePicker from "expo-image-picker";
-import { Picker } from "@react-native-picker/picker";
+import {Picker} from "@react-native-picker/picker";
+import {saveFoodRecord, updateFoodRecord} from "../../services/storage";
+import {FoodRecord, FoodCategory} from "../../types/FoodRecord";
+import {UI} from "../../styles/UI";
 
-import { saveFoodRecord } from "../../services/storage";
-import { FoodRecord } from "../../types/FoodRecord";
-import { FoodCategory } from "../../types/FoodRecord";
-
-
-
-export default function AddFoodScreen({ navigation, route }: any) 
+export default function AddFoodScreen({navigation, route}: any) 
 {
+  const editRecord = route?.params?.editRecord;
 
   const selectedDate =
+    editRecord?.date ||
     route?.params?.date ||
     new Date().toISOString().split("T")[0];
 
-  const [imageUri, setImageUri] = useState<string | null>(null);
-  const [note, setNote] = useState("");
-  const [category, setCategory] =
-  useState<FoodCategory>("Lunch");
+  const [imageUri, setImageUri] = useState<string | null>(
+    editRecord?.imageUri || null
+  );
+
+  const [note, setNote] = useState(editRecord?.note || "");
+
+  const [category, setCategory] = useState<FoodCategory>(
+    editRecord?.category || "Lunch"
+  );
+
   const [saving, setSaving] = useState(false);
 
   const pickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync(
+    {
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.7,
+    });
 
-  const result = await ImagePicker.launchImageLibraryAsync({
-    mediaTypes: ImagePicker.MediaTypeOptions.Images,
-    quality: 0.7,
-  });
+    if (!result.canceled) 
+    {
+      setImageUri(result.assets[0].uri);
+    }
+  };
 
-  if (!result.canceled) {
-    setImageUri(result.assets[0].uri);
-  }
-};
-const handleSave = async () => {
+  const handleSave = async () => {
+    if (saving) return;
+    setSaving(true);
 
-  if (saving) return;
-  setSaving(true);
+    try {
+      if (editRecord) 
+        {
 
-  try {
+        await updateFoodRecord
+        (
+          {
+            ...editRecord,
+            imageUri: imageUri ?? undefined,
+            note,
+            category,
+          }
+       );
 
-    const newRecord: FoodRecord = {
-      id: Date.now().toString(),
-      date: selectedDate,
-      imageUri: imageUri ?? undefined,
-      note,
-      category,
-      createdAt: Date.now(),
-    };
+        Alert.alert("Updated!");
 
-    await saveFoodRecord(newRecord);
+      } 
+      
+      else 
+      {
 
-    setNote("");
-    setImageUri(null);
-    setCategory("Lunch");
+        const newRecord: FoodRecord = 
+        {
+          id: Date.now().toString(),
+          date: selectedDate,
+          imageUri: imageUri ?? undefined,
+          note,
+          category,
+          createdAt: Date.now(),
+        };
 
-    Alert.alert("Saved!");
+        await saveFoodRecord(newRecord);
 
-    navigation.goBack();
+        Alert.alert("Saved!");
+      }
 
-  } finally {
-    setSaving(false);
-  }
-};
+      navigation.goBack();
+
+    } 
+    
+    finally 
+    {
+      setSaving(false);
+    }
+
+  };
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      style={{flex:1}}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+    >
+      <ScrollView
+        contentContainerStyle={styles.container}
+        keyboardShouldPersistTaps="handled"
+      >
 
-      <Text style={styles.date}>Date: {selectedDate}</Text>
+        <Text style={styles.date}>Date:{selectedDate}</Text>
+        <View style={styles.buttonWrap}>
+          <Button 
+          title="Select Food Image " 
+          onPress={pickImage} 
+          />
+        </View>
 
-      <Button title="Select Food Image" onPress={pickImage} />
+        {imageUri && (
+          <Image source={{uri:imageUri}} style={styles.image} />
+        )}
 
-      {imageUri && (
-        <Image source={{ uri: imageUri }} style={styles.image} />
-      )}
+        <TextInput
+          placeholder="Food note..."
+          style={styles.input}
+          value={note}
+          onChangeText={setNote}
+        />
 
-      <TextInput
-        placeholder="Food note..."
-        style={styles.input}
-        value={note}
-        onChangeText={setNote}
-      />
+        <Text 
+          style={styles.sectionTitle}>Category
+        </Text>
 
-     <Text>Category</Text>
+        <Picker
+          selectedValue={category}
+          onValueChange=
+          {
+            (value) =>
+            setCategory(value as FoodCategory)
+          }
+        >
+          <Picker.Item label="Breakfast" value="Breakfast" />
+          <Picker.Item label="Lunch" value="Lunch" />
+          <Picker.Item label="Dinner" value="Dinner" />
+          <Picker.Item label="Snack" value="Snack" />
+          <Picker.Item label="Cafe" value="Cafe" />
+          <Picker.Item label="Other" value="Other" />
+        </Picker>
 
-<Picker
-  selectedValue={category}
-  onValueChange={(value) =>
-    setCategory(value as FoodCategory)
-  }
->
-  <Picker.Item label="Breakfast" value="Breakfast" />
-  <Picker.Item label="Lunch" value="Lunch" />
-  <Picker.Item label="Dinner" value="Dinner" />
-  <Picker.Item label="Snack" value="Snack" />
-  <Picker.Item label="Cafe" value="Cafe" />
-  <Picker.Item label="Other" value="Other" />
-</Picker>
+        <View style={styles.saveButton}>
 
-      <Button title="Save Food Record" onPress={handleSave} />
+        <Button 
+          title="Save Food Record" 
+          onPress={handleSave} 
+        />
 
-    </View>
+</View>
+
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 16,
-  },
+const styles = StyleSheet.create
+(
+  {
+    container: 
+    {
+      padding:UI.spacing.l,
+      backgroundColor: UI.colors.background,
+    },
 
-  date: {
-    fontSize: 16,
-    marginBottom: 12,
-  },
+    date: 
+    {
+      ...UI.text.subtitle,
+      marginBottom: UI.spacing.m,
+    },
 
-  image: {
-    width: "100%",
-    height: 220,
-    marginVertical: 12,
-    borderRadius: 10,
-  },
+    sectionTitle: 
+    {
+      fontWeight:"600",
+      marginTop: UI.spacing.s,
+      marginBottom: 4,
+      color: UI.colors.primaryDark,
+    },
 
-  input: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    padding: 10,
-    marginVertical: 8,
-    borderRadius: 8,
-  },
-});
+    buttonWrap: 
+    {
+      marginBottom: UI.spacing.m,
+    },
+
+    image: 
+    {
+      width: "100%",
+      height: 220,
+      marginVertical: UI.spacing.s,
+      borderRadius: UI.radius.l,
+    },
+
+    input: 
+    {
+      borderWidth:1,
+      borderColor: UI.colors.border,
+      padding: UI.spacing.s,
+      marginVertical: UI.spacing.s,
+      borderRadius: UI.radius.m,
+      backgroundColor: UI.colors.card,
+    },
+
+    saveButton: 
+    {
+      marginTop: UI.spacing.l,
+    },
+
+ }
+);

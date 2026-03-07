@@ -1,16 +1,9 @@
-import React, { useState } from "react";
+import React, {useState} from "react";
 import 
-{
-  View,
-  TextInput,
-  FlatList,
-  TouchableOpacity,
-  Text,
-  StyleSheet,
-  Alert,
-} from "react-native";
+{View, TextInput, FlatList, TouchableOpacity, Text, StyleSheet, Alert} from "react-native";
 import * as Location from "expo-location";
 import { getFoodRecords, updateFoodRecord } from "../../services/storage";
+import { UI } from "../../styles/UI";
 
 let searchTimer: any = null;
 
@@ -26,13 +19,18 @@ type PlaceOption =
 
 export default function AddLocationScreen({ route, navigation }: any) 
 {
-  const { recordId } = route.params;
+  const {recordId} = route.params;
 
   const [query, setQuery] = useState("");
   const [options, setOptions] = useState<PlaceOption[]>(
   [
-    { id: "current", title: "Use current location", kind: "current" },
+    { 
+      id: "current", 
+      title: "Use current location", 
+      kind: "current" 
+    },
   ]);
+  
   const [loading, setLoading] = useState(false);
 
   const searchPlaces = async (text: string) => {
@@ -77,7 +75,11 @@ export default function AddLocationScreen({ route, navigation }: any)
         setOptions
         (
           [
-          { id: "current", title: "Use current location", kind: "current" },
+            {
+              id: "current", 
+              title: "Use current location", 
+              kind: "current" 
+            },
           ...searchOptions,
           ]
         );
@@ -85,7 +87,17 @@ export default function AddLocationScreen({ route, navigation }: any)
       
       catch (e) 
       {
-        setOptions([{ id: "current", title: "Use current location", kind: "current" }]);
+        setOptions
+        (
+          [
+            {
+              id: "current", 
+              title: "Use current location", 
+              kind: "current"
+            }
+          ]
+        );
+
         Alert.alert("Search failed", "Please check internet and try again.");
       } 
       
@@ -109,10 +121,10 @@ export default function AddLocationScreen({ route, navigation }: any)
     await updateFoodRecord
     (
       {
-      ...record,
-      latitude,
-      longitude,
-      locationName,
+        ...record,
+        latitude,
+        longitude,
+        locationName,
       }
     );
 
@@ -126,9 +138,11 @@ export default function AddLocationScreen({ route, navigation }: any)
     if (opt.kind === "current") 
     {
       setLoading(true);
-      try {
+      try 
+      {
         const perm = await Location.requestForegroundPermissionsAsync();
-        if (!perm.granted) {
+        if (!perm.granted) 
+        {
           Alert.alert(
             "Location permission needed",
             "Please allow location access or search by place name."
@@ -137,10 +151,13 @@ export default function AddLocationScreen({ route, navigation }: any)
         }
 
         const loc = await Location.getCurrentPositionAsync({});
-        const reverse = await Location.reverseGeocodeAsync({
-          latitude: loc.coords.latitude,
-          longitude: loc.coords.longitude,
-        });
+        const reverse = await Location.reverseGeocodeAsync
+        (
+          {
+            latitude: loc.coords.latitude,
+            longitude: loc.coords.longitude,
+          }
+        );
 
         const place = reverse?.[0];
         const name =
@@ -202,17 +219,27 @@ export default function AddLocationScreen({ route, navigation }: any)
     }
   };
 
-  const renderItem = ({ item }: { item: PlaceOption }) => (
-    <TouchableOpacity
-      style={styles.item}
-      onPress={() => pickOption(item)}
-      disabled={loading}
-    >
-      <Text style={styles.title}>{item.title}</Text>
-      {!!item.subtitle && <Text style={styles.subtitle}>{item.subtitle}</Text>}
-      {item.kind === "current" && <Text style={styles.subtitle}>Recommended</Text>}
-    </TouchableOpacity>
-  );
+const renderItem = ({ item }: { item: PlaceOption }) => (
+  <TouchableOpacity
+    style={styles.item}
+    onPress={() => pickOption(item)}
+    disabled={loading}
+    activeOpacity={0.85}
+  >
+    <Text style={styles.title}>
+      {item.kind === "current" ? "📍 " : "📌 "}
+      {item.title}
+    </Text>
+
+    {!!item.subtitle && (
+      <Text style={styles.subtitle}>{item.subtitle}</Text>
+    )}
+
+    {item.kind === "current" && (
+      <Text style={styles.recommended}>Recommended</Text>
+    )}
+  </TouchableOpacity>
+);
 
   return (
     <View style={styles.container}>
@@ -233,45 +260,67 @@ export default function AddLocationScreen({ route, navigation }: any)
           loading ? <Text style={styles.loading}>Loading…</Text> : null
         }
       />
+
     </View>
   );
 }
 
-const styles = StyleSheet.create(
-{
-  container: { flex: 1, padding: 16 },
-  search: 
+const styles = StyleSheet.create
+(
   {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 10,
-    padding: 12,
-    marginBottom: 12,
-  },
+    container: 
+    {
+      flex: 1,
+      padding: UI.spacing.l,
+      backgroundColor: UI.colors.background,
+    },
 
-  item: 
-  {
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
-  },
+    search: 
+    {
+      borderWidth: 1,
+      borderColor: UI.colors.border,
+      borderRadius: UI.radius.l,
+      padding: UI.spacing.m,
+      marginBottom: UI.spacing.m,
+      backgroundColor: UI.colors.card,
+      color: UI.colors.text,
+      ...UI.shadow,
+    },
 
-  title: 
-  { 
-    fontSize: 16, 
-    fontWeight: "600" 
-  },
+    item: 
+    {
+      backgroundColor: UI.colors.card,
+      padding: UI.spacing.m,
+      marginBottom: UI.spacing.s,
+      borderRadius: UI.radius.l,
+      borderWidth: 1,
+      borderColor: UI.colors.border,
+      ...UI.shadow,
+    },
 
-  subtitle: 
-  { 
-    marginTop: 4, 
-    color: "#666" 
-  },
+    title: 
+    {
+      ...UI.text.subtitle,
+    },
 
-  loading: 
-  { 
-    paddingVertical: 12, 
-    textAlign: "center", 
-    color: "#666" 
-  },
-});
+    subtitle: 
+    {
+      marginTop: 4,
+      color: UI.colors.subtext,
+    },
+
+    recommended: 
+    {
+      marginTop: 6,
+      color: UI.colors.primaryDark,
+      fontWeight: "600",
+    },
+
+    loading: 
+    {
+      paddingVertical: 12,
+      textAlign: "center",
+      color: UI.colors.subtext,
+    },
+  }
+);

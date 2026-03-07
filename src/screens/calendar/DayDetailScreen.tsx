@@ -1,46 +1,106 @@
-import React, { useEffect, useState } from "react";
-import 
+import React, {useState, useLayoutEffect} from "react";
+import {useFocusEffect} from "@react-navigation/native";
+import {useCallback} from "react";
+import {View, Text, StyleSheet, FlatList, Image, Button, Alert} from "react-native";
+import {getFoodRecords, deleteFoodRecord} from "../../services/storage";
+import {FoodRecord} from "../../types/FoodRecord";
+import {UI} from "../../styles/UI";
+
+export default function DayDetailScreen({route, navigation}: any)
 {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  Image,
-} from "react-native";
+  const {date} = route.params;
 
-import { getFoodRecords } from "../../services/storage";
-import { FoodRecord } from "../../types/FoodRecord";
-
-export default function DayDetailScreen({ route }: any) 
-{
-
-  const { date } = route.params;
+  useLayoutEffect(() => {
+  navigation.setOptions
+  (
+    {
+      headerRight: () => (
+        <Button
+          title="+"
+          onPress={() => navigation.navigate("AddFood", {date})}
+        />
+      ),
+    }
+  );
+}, [navigation, date]);
 
   const [records, setRecords] = useState<FoodRecord[]>([]);
 
-  useEffect(() => {
-    loadRecords();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      loadRecords();
+    }, [date])
+  );
 
   const loadRecords = async () => {
     const allRecords = await getFoodRecords();
 
-    const filtered = allRecords.filter(
-      record => record.date === date
-    );
+   const filtered = allRecords
+  .filter(record => record.date === date)
+  .sort((a, b) => a.createdAt - b.createdAt);
 
     setRecords(filtered);
   };
 
-  const renderItem = ({ item }: { item: FoodRecord }) => (
-    <View style={styles.card}>
-      <Image source={{ uri: item.imageUri }} style={styles.image} />
+  const handleDelete = async (id:string) => {
+  Alert.alert(
+    "Delete Record",
+    "Do you really want to delete this record?",
+    [
+      {text:"Cancel", 
+       style:"cancel"
+      },
 
-      <Text style={styles.category}>{item.category}</Text>
-
-      <Text>{item.note}</Text>
-    </View>
+      {
+        text:"Delete",
+        style:"destructive",
+        onPress: async () => {
+          await deleteFoodRecord(id);
+          loadRecords(); 
+        },
+      },
+    ]
   );
+};
+
+  const renderItem = ({ item }: {item: FoodRecord}) => (
+  <View style={styles.card}>
+    {item.imageUri && (
+      <Image source={{uri: item.imageUri}} style={styles.image} />
+    )}
+
+    <Text style={styles.category}>{item.category}</Text>
+
+    {item.locationName ? (
+      <Text style={styles.location}>📍 {item.locationName}</Text>
+    ) : (
+      <Text style={styles.locationEmpty}>No location saved</Text>
+    )}
+
+    {item.note ? (
+      <Text>{item.note}</Text>
+    ) : (
+      <Text style={styles.noteEmpty}>No note</Text>
+    )}
+
+    <View style={styles.actions}>
+      <Button
+        title="Edit"
+        onPress={() =>
+          navigation.navigate("AddFood", {
+            editRecord: item,
+          })
+        }
+      />
+
+      <Button
+        title="Delete"
+        color="red"
+        onPress={() => handleDelete(item.id)}
+      />
+    </View>
+  </View>
+);
 
   return (
     <View style={styles.container}>
@@ -50,47 +110,91 @@ export default function DayDetailScreen({ route }: any)
         data={records}
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
-        ListEmptyComponent={
-          <Text>No food recorded.</Text>
+        ListEmptyComponent=
+        {
+          <Text style=
+          {
+            { 
+              textAlign: "center", 
+              color: UI.colors.subtext 
+            }
+          }>
+            No food record yet 
+          </Text>
         }
       />
     </View>
   );
 }
 
-const styles = StyleSheet.create(
-{
-  container: 
+const styles = StyleSheet.create
+(
   {
-    flex: 1,
-    padding: 16,
-  },
+    container: 
+    {
+      flex:1,
+      padding: UI.spacing.l,
+      backgroundColor: UI.colors.background,
+    },
 
-  title: 
-  {
-    fontSize: 20,
-    fontWeight: "bold",
-    marginBottom: 12,
-  },
+    title: 
+    {
+      ...UI.text.title,
+      marginBottom: UI.spacing.m,
+    },
 
-  card: 
-  {
-    backgroundColor: "#fff",
-    padding: 12,
-    marginBottom: 12,
-    borderRadius: 10,
-  },
+    card: 
+    {
+      backgroundColor: UI.colors.card,
+      padding: UI.spacing.m,
+      marginBottom: UI.spacing.m,
+      borderRadius: UI.radius.l,
+      borderWidth: 1,
+      borderColor: UI.colors.border,
+      ...UI.shadow,
+    },
 
-  image: 
-  {
-    width: "100%",
-    height: 200,
-    borderRadius: 10,
-    marginBottom: 8,
-  },
+    image: 
+    {
+      width: "100%",
+      height: 200,
+      borderRadius: UI.radius.m,
+      marginBottom: UI.spacing.s,
+    },
 
-  category: 
-  {
-    fontWeight: "bold",
-  },
-});
+    category: 
+    {
+      ...UI.text.subtitle,
+      marginBottom: 4,
+    },
+
+    location: 
+    {
+      marginTop: 4,
+      marginBottom: 4,
+      color: UI.colors.primaryDark,
+      fontWeight: "500",
+    },
+
+    locationEmpty: 
+    {
+      marginTop: 4,
+      marginBottom: 4,
+      color: UI.colors.subtext,
+    },
+
+    noteEmpty: 
+    {
+      color: UI.colors.subtext,
+      fontStyle: "italic",
+    },
+
+    actions: 
+    {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      marginTop: UI.spacing.s,
+    },
+
+  }
+);
